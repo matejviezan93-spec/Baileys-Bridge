@@ -1,0 +1,74 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-test:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build services
+        run: docker compose build
+
+      - name: Run API tests
+        run: docker compose run --rm api_server pytest -q
+
+      - name: Run worker tests
+        run: docker compose run --rm baileys_worker npm test --silent
+
+      - name: Clean up containers
+        if: always()
+        run: docker compose down --remove-orphans
+
+  terraform:
+    name: Terraform Apply
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    env:
+      DIGITALOCEAN_TOKEN: ${{ secrets.DO_TOKEN }}
+    defaults:
+      run:
+        working-directory: core/infra
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Validate
+        run: terraform validate
+
+      - name: Terraform Plan
+        run: terraform plan -out=tfplan
+
+      - name: Terraform Apply
+        run: terraform apply -auto-approve tfplan
+
+  deploy:
+    name: Deploy Application
+    runs-on: ubuntu-latest
+    needs: terraform
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            set -euo pipefail
+            cd /opt/baileys-bridge
+            git pull
+            docker compose pull
+            docker compose up -d
+            curl -fsS http://localhost:8000/
