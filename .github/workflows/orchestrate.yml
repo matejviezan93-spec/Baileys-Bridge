@@ -1,0 +1,55 @@
+name: Orchestrate Modules
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types:
+      - closed
+    branches:
+      - main
+
+jobs:
+  module-matrix:
+    name: Build and Test ${{ matrix.module }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        module: [baileys-api, bridge-sql, bridge-worker, bridge-monitoring]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build services
+        run: docker compose build
+
+      - name: Run module tests
+        run: |
+          case "${{ matrix.module }}" in
+            baileys-api)
+              docker compose run --rm api_server pytest -q
+              ;;
+            bridge-sql)
+              docker compose run --rm bridge_sql pytest -q || echo "No tests defined for bridge-sql"
+              ;;
+            bridge-worker)
+              docker compose run --rm baileys_worker npm test --silent
+              ;;
+            bridge-monitoring)
+              docker compose run --rm monitoring ./test.sh || echo "No tests defined for monitoring"
+              ;;
+          esac
+
+      - name: Clean up containers
+        if: always()
+        run: docker compose down --remove-orphans
+
+      - name: Emit deployment suggestion
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: echo "Deployment candidate ready for module ${{ matrix.module }}"

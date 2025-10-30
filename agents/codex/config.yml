@@ -1,0 +1,17 @@
+agent:
+  name: codex
+  mode: evolutionary
+  population_size: 4
+  strategy_diversity: true
+  permissions:
+    - read/write repo
+    - create branches
+    - push commits
+    - create pull requests
+    - merge pull requests
+  github_token: ${{ secrets.CODEX_GH_TOKEN }}
+  auto_merge: true
+  branch_naming: evo/*
+  tests_required: true
+  ci_workflow: ci.yml
+  selection_metric: "CI green && minimal diff && reproducible"
