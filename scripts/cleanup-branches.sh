@@ -21,7 +21,7 @@ fi
 
 # Get all remote branches using ls-remote
 echo "Fetching all remote branches..."
-branches=$(git ls-remote --heads origin | awk '{print $2}' | sed 's|refs/heads/||' | grep -v '^main$')
+branches=$(git ls-remote --heads origin | awk '{print $2}' | sed 's|refs/heads/||' | grep -v '^main$' || true)
 
 if [ -z "$branches" ]; then
     echo "No branches to delete. Only main branch exists."
@@ -36,7 +36,11 @@ echo "========================================"
 echo ""
 
 # Count branches
-branch_count=$(echo "$branches" | wc -l)
+if [ -n "$branches" ]; then
+    branch_count=$(echo "$branches" | wc -l)
+else
+    branch_count=0
+fi
 echo "Total branches to delete: $branch_count"
 echo ""
 

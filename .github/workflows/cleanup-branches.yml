@@ -29,7 +29,7 @@ jobs:
           branches=$(git ls-remote --heads origin | \
             awk '{print $2}' | \
             sed 's|refs/heads/||' | \
-            grep -v '^main$')
+            grep -v '^main$' || true)
 
           if [ -z "$branches" ]; then
             echo "No branches to delete. Only main branch exists."
