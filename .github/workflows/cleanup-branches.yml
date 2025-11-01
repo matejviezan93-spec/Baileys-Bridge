@@ -1,6 +1,7 @@
+---
 name: Cleanup Branches
 
-on:
+"on":
   workflow_dispatch:  # Manual trigger
   schedule:
     # Run weekly on Sundays at midnight UTC
@@ -11,34 +12,38 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      
+
       - name: Delete branches other than main
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "Fetching all remote branches..."
-          
+
           # Get all remote branches except main using ls-remote
-          branches=$(git ls-remote --heads origin | awk '{print $2}' | sed 's|refs/heads/||' | grep -v '^main$')
-          
+          branches=$(git ls-remote --heads origin | \
+            awk '{print $2}' | \
+            sed 's|refs/heads/||' | \
+            grep -v '^main$')
+
           if [ -z "$branches" ]; then
             echo "No branches to delete. Only main branch exists."
             exit 0
           fi
-          
+
           echo "Branches to delete:"
           echo "$branches"
-          
+
           # Delete each branch
           for branch in $branches; do
             echo "Deleting branch: $branch"
-            git push origin --delete "$branch" || echo "Failed to delete $branch"
+            git push origin --delete "$branch" || \
+              echo "Failed to delete $branch"
           done
-          
+
           echo "Branch cleanup completed!"
