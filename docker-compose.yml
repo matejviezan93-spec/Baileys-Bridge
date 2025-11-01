@@ -24,6 +24,8 @@ services:
 
   baileys_worker:
     build: ./modules/bridge-worker
+    ports:
+      - "4000:4000"
     depends_on:
       - api_server
     env_file:
@@ -32,12 +34,30 @@ services:
       - bridge-net
 
   monitoring:
-    build: ./modules/bridge-monitoring
+    image: prom/prometheus:latest
     ports:
       - "9090:9090"
+    volumes:
+      - ./modules/bridge-monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    depends_on:
+      - api_server
+      - baileys_worker
+    networks:
+      - bridge-net
+
+  grafana:
+    image: grafana/grafana-oss:latest
+    ports:
       - "3000:3000"
-    env_file:
-      - core/env/.env
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
+    volumes:
+      - ./modules/bridge-monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./modules/bridge-monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - monitoring
     networks:
       - bridge-net
 

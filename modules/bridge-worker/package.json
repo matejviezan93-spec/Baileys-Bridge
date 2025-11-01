@@ -1,0 +1,13 @@
+{
+  "name": "bridge-worker",
+  "version": "0.1.0",
+  "description": "Bridge worker with basic observability endpoints",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "prom-client": "^15.1.0"
+  }
+}
