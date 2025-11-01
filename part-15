@@ -1,0 +1,9 @@
+diff --git a/modules/bridge-ai/README.md b/modules/bridge-ai/README.md
+deleted file mode 100644
+index 459e519ffd56fa78b88fa3e66c7cbfe6f145db5e..0000000000000000000000000000000000000000
+--- a/modules/bridge-ai/README.md
++++ /dev/null
+@@ -1,3 +0,0 @@
+-# Bridge AI Module
+-
+-Codex-driven orchestration, ML workflows, and AI-powered automation capabilities.

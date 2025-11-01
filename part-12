@@ -1,0 +1,7 @@
+diff --git a/modules/baileys-api b/modules/baileys-api
+new file mode 160000
+index 0000000000000000000000000000000000000000..b4fac20145c5b1f8563c2670c9bec3680a55906a
+--- /dev/null
++++ b/modules/baileys-api
+@@ -0,0 +1 @@
++Subproject commit b4fac20145c5b1f8563c2670c9bec3680a55906a

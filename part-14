@@ -1,0 +1,7 @@
+diff --git a/modules/bridge-ai b/modules/bridge-ai
+new file mode 160000
+index 0000000000000000000000000000000000000000..f22ed6fa9dfb94a70cfb1498a33c168a035874b6
+--- /dev/null
++++ b/modules/bridge-ai
+@@ -0,0 +1 @@
++Subproject commit f22ed6fa9dfb94a70cfb1498a33c168a035874b6

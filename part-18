@@ -1,0 +1,7 @@
+diff --git a/modules/bridge-worker b/modules/bridge-worker
+new file mode 160000
+index 0000000000000000000000000000000000000000..f6478efaf36c094e6a19d133d0caa99b8157fa75
+--- /dev/null
++++ b/modules/bridge-worker
+@@ -0,0 +1 @@
++Subproject commit f6478efaf36c094e6a19d133d0caa99b8157fa75

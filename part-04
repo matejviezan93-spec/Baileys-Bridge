@@ -1,0 +1,11 @@
+diff --git a/core/infra/README.md b/core/infra/README.md
+deleted file mode 100644
+index ce9ac129e28c04657e019ef6c2156dc21dd3e20e..0000000000000000000000000000000000000000
+--- a/core/infra/README.md
++++ /dev/null
+@@ -1,5 +0,0 @@
+-# Core Infrastructure
+-
+-This directory houses Terraform modules and configuration for provisioning the Baileys-Bridge control plane on DigitalOcean. The resources created here are intended to host and orchestrate the modular subprojects maintained in `modules/`.
+-
+-See `provider.tf`, `main.tf`, and supporting files for implementation specifics.

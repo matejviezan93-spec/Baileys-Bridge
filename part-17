@@ -1,0 +1,9 @@
+diff --git a/modules/bridge-monitoring/README.md b/modules/bridge-monitoring/README.md
+deleted file mode 100644
+index 9709ffa1a5ee7d7fc49bea2538f3060233996e23..0000000000000000000000000000000000000000
+--- a/modules/bridge-monitoring/README.md
++++ /dev/null
+@@ -1,3 +0,0 @@
+-# Bridge Monitoring Module
+-
+-Observability stack (Prometheus, Grafana, Alertmanager) packaged as a dedicated module.

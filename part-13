@@ -1,0 +1,9 @@
+diff --git a/modules/baileys-api/README.md b/modules/baileys-api/README.md
+deleted file mode 100644
+index ce070bcf906f62a6b7ec795e47d8a9f2ed78d909..0000000000000000000000000000000000000000
+--- a/modules/baileys-api/README.md
++++ /dev/null
+@@ -1,3 +0,0 @@
+-# Baileys API Module
+-
+-FastAPI-based core API service for Baileys-Bridge. Integrated as a Git submodule for independent evolution.

@@ -1,0 +1,33 @@
+diff --git a/.gitmodules b/.gitmodules
+index 00594ce0cb4fdc9b1e2bab78341a488e5bdba1aa..96e83823b7852c485774cd3256946c0fccee230e 100644
+--- a/.gitmodules
++++ b/.gitmodules
+@@ -1,15 +1,18 @@
+ [submodule "modules/baileys-api"]
+-path = modules/baileys-api
+-url = git@github.com:matejviezan93-spec/baileys-api.git
++	path = modules/baileys-api
++	url = https://github.com/matejviezan93-spec/baileys-api.git
+ [submodule "modules/bridge-sql"]
+-path = modules/bridge-sql
+-url = git@github.com:matejviezan93-spec/bridge-sql.git
++	path = modules/bridge-sql
++	url = git@github.com:matejviezan93-spec/bridge-sql.git
+ [submodule "modules/bridge-worker"]
+-path = modules/bridge-worker
+-url = git@github.com:matejviezan93-spec/bridge-worker.git
++	path = modules/bridge-worker
++	url = https://github.com/matejviezan93-spec/bridge-worker.git
+ [submodule "modules/bridge-monitoring"]
+-path = modules/bridge-monitoring
+-url = git@github.com:matejviezan93-spec/bridge-monitoring.git
++	path = modules/bridge-monitoring
++	url = https://github.com/matejviezan93-spec/bridge-monitoring.git
+ [submodule "modules/bridge-ai"]
+-path = modules/bridge-ai
+-url = git@github.com:matejviezan93-spec/bridge-ai.git
++	path = modules/bridge-ai
++	url = https://github.com/matejviezan93-spec/bridge-ai.git
++[submodule "core/infra"]
++	path = core/infra
++	url = https://github.com/matejviezan93-spec/bridge-core-infra.git
