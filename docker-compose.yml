@@ -1,4 +1,12 @@
 services:
+  redis:
+    image: redis:latest
+    container_name: bridge_redis
+    ports:
+      - "6379:6379"
+    networks:
+      - bridge_net
+
   api_server:
     build: ./modules/baileys-api
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000
@@ -9,16 +17,20 @@ services:
     env_file:
       - core/env/.env
     networks:
-      - bridge-net
+      - bridge_net
 
   bridge_sql:
     build: ./modules/bridge-sql
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=bridge
     ports:
       - "5432:5432"
     env_file:
       - core/env/.env
     networks:
-      - bridge-net
+      - bridge_net
 
   baileys_worker:
     build: ./modules/bridge-worker
@@ -29,7 +41,7 @@ services:
     env_file:
       - core/env/.env
     networks:
-      - bridge-net
+      - bridge_net
 
   prometheus:
     image: prom/prometheus:v2.51.2
@@ -41,11 +53,13 @@ services:
       - api_server
       - baileys_worker
     networks:
-      - bridge-net
+      - bridge_net
 
   grafana:
     image: grafana/grafana:10.4.3
     environment:
+      - GF_LOG_LEVEL=warn
+      - GF_LOG_CONSOLE_LEVEL=warn
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=admin
     volumes:
@@ -56,7 +70,7 @@ services:
     depends_on:
       - prometheus
     networks:
-      - bridge-net
+      - bridge_net
 
   bridge_ai:
     build: ./modules/bridge-ai
@@ -65,8 +79,10 @@ services:
     env_file:
       - core/env/.env
     networks:
-      - bridge-net
+      - bridge_net
+
+# --- network fix ---
 
 networks:
-  bridge-net:
+  bridge_net:
     driver: bridge
