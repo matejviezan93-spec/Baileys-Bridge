@@ -40,10 +40,12 @@ jobs:
           echo "$branches"
 
           # Delete each branch
-          for branch in $branches; do
-            echo "Deleting branch: $branch"
-            git push origin --delete "$branch" || \
-              echo "Failed to delete $branch"
-          done
+          while IFS= read -r branch; do
+            if [ -n "$branch" ]; then
+              echo "Deleting branch: $branch"
+              git push origin --delete "$branch" || \
+                echo "Failed to delete $branch"
+            fi
+          done <<< "$branches"
 
           echo "Branch cleanup completed!"

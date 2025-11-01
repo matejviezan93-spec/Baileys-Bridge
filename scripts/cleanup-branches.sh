@@ -37,7 +37,7 @@ echo ""
 
 # Count branches
 if [ -n "$branches" ]; then
-    branch_count=$(echo "$branches" | wc -l)
+    branch_count=$(echo "$branches" | grep -c '^' || echo 0)
 else
     branch_count=0
 fi
@@ -61,16 +61,18 @@ fi
 success_count=0
 fail_count=0
 
-for branch in $branches; do
-    echo "Deleting branch: $branch"
-    if git push origin --delete "$branch" 2>/dev/null; then
-        echo "✓ Successfully deleted: $branch"
-        ((success_count++))
-    else
-        echo "✗ Failed to delete: $branch"
-        ((fail_count++))
+while IFS= read -r branch; do
+    if [ -n "$branch" ]; then
+        echo "Deleting branch: $branch"
+        if git push origin --delete "$branch" 2>/dev/null; then
+            echo "✓ Successfully deleted: $branch"
+            ((success_count++))
+        else
+            echo "✗ Failed to delete: $branch"
+            ((fail_count++))
+        fi
     fi
-done
+done <<< "$branches"
 
 echo ""
 echo "========================================"
