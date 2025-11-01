@@ -1,0 +1,67 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": false,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "API Request Latency",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(baileys_api_request_latency_seconds_bucket[5m])) by (le))",
+          "legendFormat": "p95 latency"
+        }
+      ],
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0}
+    },
+    {
+      "type": "stat",
+      "title": "API Uptime",
+      "targets": [
+        {
+          "expr": "baileys_api_uptime_seconds"
+        }
+      ],
+      "gridPos": {"h": 8, "w": 6, "x": 12, "y": 0}
+    },
+    {
+      "type": "stat",
+      "title": "Worker Messages Processed",
+      "targets": [
+        {
+          "expr": "bridge_worker_messages_total"
+        }
+      ],
+      "gridPos": {"h": 8, "w": 6, "x": 18, "y": 0}
+    },
+    {
+      "type": "timeseries",
+      "title": "Active Worker Sessions",
+      "targets": [
+        {
+          "expr": "bridge_worker_active_sessions"
+        }
+      ],
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8}
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": ["service-health"],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timezone": "",
+  "title": "Service Health",
+  "uid": "service-health",
+  "version": 1
+}
