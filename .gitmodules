@@ -1,6 +1,0 @@
-[submodule "modules/bridge-worker"]
-	path = modules/bridge-worker
-	url = git@github.com:matejviezan93-spec/bridge-worker.git
-[submodule "modules/bridge-sql"]
-	path = modules/bridge-sql
-	url = git@github.com:matejviezan93-spec/bridge-sql.git
