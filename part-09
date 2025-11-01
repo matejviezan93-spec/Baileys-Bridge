@@ -1,0 +1,11 @@
+diff --git a/core/infra/terraform.tfvars.example b/core/infra/terraform.tfvars.example
+deleted file mode 100644
+index c2aae7d4f0c7af6bb90a0eeb59878ea36908f74f..0000000000000000000000000000000000000000
+--- a/core/infra/terraform.tfvars.example
++++ /dev/null
+@@ -1,5 +0,0 @@
+-do_token          = "dop_v1_your_token_here"
+-region            = "sgp1"
+-droplet_name      = "baileys-bridge"
+-ssh_key_id        = "123456"
+-enable_floating_ip = false

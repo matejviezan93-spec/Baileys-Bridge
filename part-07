@@ -1,0 +1,19 @@
+diff --git a/core/infra/outputs.tf b/core/infra/outputs.tf
+deleted file mode 100644
+index ddd5a7c91647dea04b8c30cac9585b8051af90a2..0000000000000000000000000000000000000000
+--- a/core/infra/outputs.tf
++++ /dev/null
+@@ -1,13 +0,0 @@
+-locals {
+-  primary_ipv4 = try(digitalocean_floating_ip.app[0].ip_address, digitalocean_droplet.app.ipv4_address)
+-}
+-
+-output "droplet_ipv4" {
+-  description = "Primary IPv4 address for the Baileys Bridge droplet"
+-  value       = local.primary_ipv4
+-}
+-
+-output "ssh_connect" {
+-  description = "Convenient SSH command to connect to the droplet"
+-  value       = "ssh root@${local.primary_ipv4}"
+-}

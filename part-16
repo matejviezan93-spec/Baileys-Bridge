@@ -1,0 +1,7 @@
+diff --git a/modules/bridge-monitoring b/modules/bridge-monitoring
+new file mode 160000
+index 0000000000000000000000000000000000000000..49dc0e640797b2e7f50e52986757daebc9119be9
+--- /dev/null
++++ b/modules/bridge-monitoring
+@@ -0,0 +1 @@
++Subproject commit 49dc0e640797b2e7f50e52986757daebc9119be9

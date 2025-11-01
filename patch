@@ -1,0 +1,457 @@
+diff --git a/.github/workflows/orchestrate.yml b/.github/workflows/orchestrate.yml
+index 77c371b3f1197ae5f1440232db490f468fd30444..2203579089b850f06df40aa6652e302cb45de284 100644
+--- a/.github/workflows/orchestrate.yml
++++ b/.github/workflows/orchestrate.yml
+@@ -1,55 +1,61 @@
+ name: Orchestrate Modules
+ 
+ on:
+   push:
+     branches:
+       - main
+   pull_request:
+     types:
+       - closed
+     branches:
+       - main
+ 
+ jobs:
+   module-matrix:
+     name: Build and Test ${{ matrix.module }}
+     runs-on: ubuntu-latest
+     strategy:
+       matrix:
+-        module: [baileys-api, bridge-sql, bridge-worker, bridge-monitoring]
++        module: [baileys-api, bridge-sql, bridge-worker, bridge-monitoring, bridge-ai, core-infra]
+     steps:
+       - name: Checkout repository
+         uses: actions/checkout@v4
+         with:
+           submodules: true
+ 
+       - name: Set up Docker Buildx
+         uses: docker/setup-buildx-action@v3
+ 
+       - name: Build services
+         run: docker compose build
+ 
+       - name: Run module tests
+         run: |
+           case "${{ matrix.module }}" in
+             baileys-api)
+               docker compose run --rm api_server pytest -q
+               ;;
+             bridge-sql)
+               docker compose run --rm bridge_sql pytest -q || echo "No tests defined for bridge-sql"
+               ;;
+             bridge-worker)
+               docker compose run --rm baileys_worker npm test --silent
+               ;;
+             bridge-monitoring)
+               docker compose run --rm monitoring ./test.sh || echo "No tests defined for monitoring"
+               ;;
++            bridge-ai)
++              docker compose run --rm bridge_ai npm test --silent || echo "No tests defined for bridge-ai"
++              ;;
++            core-infra)
++              echo "No automated checks defined for core infrastructure"
++              ;;
+           esac
+ 
+       - name: Clean up containers
+         if: always()
+         run: docker compose down --remove-orphans
+ 
+       - name: Emit deployment suggestion
+         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+         run: echo "Deployment candidate ready for module ${{ matrix.module }}"
+diff --git a/.gitmodules b/.gitmodules
+index 00594ce0cb4fdc9b1e2bab78341a488e5bdba1aa..96e83823b7852c485774cd3256946c0fccee230e 100644
+--- a/.gitmodules
++++ b/.gitmodules
+@@ -1,15 +1,18 @@
+ [submodule "modules/baileys-api"]
+-path = modules/baileys-api
+-url = git@github.com:matejviezan93-spec/baileys-api.git
++	path = modules/baileys-api
++	url = https://github.com/matejviezan93-spec/baileys-api.git
+ [submodule "modules/bridge-sql"]
+-path = modules/bridge-sql
+-url = git@github.com:matejviezan93-spec/bridge-sql.git
++	path = modules/bridge-sql
++	url = git@github.com:matejviezan93-spec/bridge-sql.git
+ [submodule "modules/bridge-worker"]
+-path = modules/bridge-worker
+-url = git@github.com:matejviezan93-spec/bridge-worker.git
++	path = modules/bridge-worker
++	url = https://github.com/matejviezan93-spec/bridge-worker.git
+ [submodule "modules/bridge-monitoring"]
+-path = modules/bridge-monitoring
+-url = git@github.com:matejviezan93-spec/bridge-monitoring.git
++	path = modules/bridge-monitoring
++	url = https://github.com/matejviezan93-spec/bridge-monitoring.git
+ [submodule "modules/bridge-ai"]
+-path = modules/bridge-ai
+-url = git@github.com:matejviezan93-spec/bridge-ai.git
++	path = modules/bridge-ai
++	url = https://github.com/matejviezan93-spec/bridge-ai.git
++[submodule "core/infra"]
++	path = core/infra
++	url = https://github.com/matejviezan93-spec/bridge-core-infra.git
+diff --git a/core/infra b/core/infra
+new file mode 160000
+index 0000000000000000000000000000000000000000..6fe139a05234e6754378d9daf61ca2355e83f491
+--- /dev/null
++++ b/core/infra
+@@ -0,0 +1 @@
++Subproject commit 6fe139a05234e6754378d9daf61ca2355e83f491
+diff --git a/core/infra/README.md b/core/infra/README.md
+deleted file mode 100644
+index ce9ac129e28c04657e019ef6c2156dc21dd3e20e..0000000000000000000000000000000000000000
+--- a/core/infra/README.md
++++ /dev/null
+@@ -1,5 +0,0 @@
+-# Core Infrastructure
+-
+-This directory houses Terraform modules and configuration for provisioning the Baileys-Bridge control plane on DigitalOcean. The resources created here are intended to host and orchestrate the modular subprojects maintained in `modules/`.
+-
+-See `provider.tf`, `main.tf`, and supporting files for implementation specifics.
+diff --git a/core/infra/backend.tf b/core/infra/backend.tf
+deleted file mode 100644
+index f7a8c388b70bf8bf2fe511387d0115e51c46465d..0000000000000000000000000000000000000000
+--- a/core/infra/backend.tf
++++ /dev/null
+@@ -1,14 +0,0 @@
+-terraform {
+-  required_version = ">= 1.4.0"
+-
+-  required_providers {
+-    digitalocean = {
+-      source  = "digitalocean/digitalocean"
+-      version = "~> 2.29"
+-    }
+-  }
+-
+-  backend "local" {
+-    path = "terraform.tfstate"
+-  }
+-}
+diff --git a/core/infra/main.tf b/core/infra/main.tf
+deleted file mode 100644
+index c80e7845fc48759664e5807fac4e6a275e0a911f..0000000000000000000000000000000000000000
+--- a/core/infra/main.tf
++++ /dev/null
+@@ -1,81 +0,0 @@
+-resource "digitalocean_droplet" "app" {
+-  name   = var.droplet_name
+-  region = var.region
+-  size   = "s-1vcpu-2gb"
+-  image  = "ubuntu-22-04-x64"
+-
+-  ssh_keys = [var.ssh_key_id]
+-
+-  user_data = <<-EOT
+-    #cloud-config
+-    package_update: true
+-    packages:
+-      - apt-transport-https
+-      - ca-certificates
+-      - curl
+-      - gnupg
+-      - lsb-release
+-      - docker.io
+-      - docker-compose-plugin
+-      - git
+-    runcmd:
+-      - [systemctl, enable, "docker"]
+-      - [systemctl, start, "docker"]
+-      - [usermod, -aG, docker, "root"]
+-      - [mkdir, -p, "/opt/baileys-bridge"]
+-  EOT
+-}
+-
+-resource "digitalocean_firewall" "app" {
+-  name = "${var.droplet_name}-fw"
+-
+-  inbound_rule {
+-    protocol         = "tcp"
+-    port_range       = "22"
+-    source_addresses = ["0.0.0.0/0", "::/0"]
+-  }
+-
+-  inbound_rule {
+-    protocol         = "tcp"
+-    port_range       = "80"
+-    source_addresses = ["0.0.0.0/0", "::/0"]
+-  }
+-
+-  inbound_rule {
+-    protocol         = "tcp"
+-    port_range       = "443"
+-    source_addresses = ["0.0.0.0/0", "::/0"]
+-  }
+-
+-  inbound_rule {
+-    protocol         = "tcp"
+-    port_range       = "8000"
+-    source_addresses = ["0.0.0.0/0", "::/0"]
+-  }
+-
+-  outbound_rule {
+-    protocol              = "tcp"
+-    port_range            = "1-65535"
+-    destination_addresses = ["0.0.0.0/0", "::/0"]
+-  }
+-
+-  outbound_rule {
+-    protocol              = "udp"
+-    port_range            = "1-65535"
+-    destination_addresses = ["0.0.0.0/0", "::/0"]
+-  }
+-
+-  droplet_ids = [digitalocean_droplet.app.id]
+-}
+-
+-resource "digitalocean_floating_ip" "app" {
+-  count  = var.enable_floating_ip ? 1 : 0
+-  region = var.region
+-}
+-
+-resource "digitalocean_floating_ip_assignment" "app" {
+-  count       = var.enable_floating_ip ? 1 : 0
+-  ip_address  = digitalocean_floating_ip.app[count.index].ip_address
+-  droplet_id  = digitalocean_droplet.app.id
+-  depends_on  = [digitalocean_floating_ip.app]
+-}
+diff --git a/core/infra/outputs.tf b/core/infra/outputs.tf
+deleted file mode 100644
+index ddd5a7c91647dea04b8c30cac9585b8051af90a2..0000000000000000000000000000000000000000
+--- a/core/infra/outputs.tf
++++ /dev/null
+@@ -1,13 +0,0 @@
+-locals {
+-  primary_ipv4 = try(digitalocean_floating_ip.app[0].ip_address, digitalocean_droplet.app.ipv4_address)
+-}
+-
+-output "droplet_ipv4" {
+-  description = "Primary IPv4 address for the Baileys Bridge droplet"
+-  value       = local.primary_ipv4
+-}
+-
+-output "ssh_connect" {
+-  description = "Convenient SSH command to connect to the droplet"
+-  value       = "ssh root@${local.primary_ipv4}"
+-}
+diff --git a/core/infra/provider.tf b/core/infra/provider.tf
+deleted file mode 100644
+index d80cc8b934cdda3e6c4173fa117b30f111a03e41..0000000000000000000000000000000000000000
+--- a/core/infra/provider.tf
++++ /dev/null
+@@ -1,3 +0,0 @@
+-provider "digitalocean" {
+-  token = var.do_token
+-}
+diff --git a/core/infra/terraform.tfvars.example b/core/infra/terraform.tfvars.example
+deleted file mode 100644
+index c2aae7d4f0c7af6bb90a0eeb59878ea36908f74f..0000000000000000000000000000000000000000
+--- a/core/infra/terraform.tfvars.example
++++ /dev/null
+@@ -1,5 +0,0 @@
+-do_token          = "dop_v1_your_token_here"
+-region            = "sgp1"
+-droplet_name      = "baileys-bridge"
+-ssh_key_id        = "123456"
+-enable_floating_ip = false
+diff --git a/core/infra/variables.tf b/core/infra/variables.tf
+deleted file mode 100644
+index d55c745c7d8aa33f7cd9b30079bd331c323833f5..0000000000000000000000000000000000000000
+--- a/core/infra/variables.tf
++++ /dev/null
+@@ -1,28 +0,0 @@
+-variable "do_token" {
+-  type        = string
+-  description = "DigitalOcean API token"
+-  sensitive   = true
+-}
+-
+-variable "region" {
+-  type        = string
+-  description = "Region slug where resources will be created"
+-  default     = "sgp1"
+-}
+-
+-variable "droplet_name" {
+-  type        = string
+-  description = "Name for the Baileys Bridge droplet"
+-  default     = "baileys-bridge"
+-}
+-
+-variable "ssh_key_id" {
+-  type        = string
+-  description = "DigitalOcean SSH key ID or fingerprint to inject into the droplet"
+-}
+-
+-variable "enable_floating_ip" {
+-  type        = bool
+-  description = "Whether to allocate and assign a floating IP to the droplet"
+-  default     = false
+-}
+diff --git a/docker-compose.yml b/docker-compose.yml
+index 395f0bb762ad5e542881ddf29c261ca226246c0d..eb136d75bb55ae1f0bf154e03b86cb63627101f3 100644
+--- a/docker-compose.yml
++++ b/docker-compose.yml
+@@ -2,54 +2,73 @@ version: "3.9"
+ 
+ services:
+   api_server:
+     build: ./modules/baileys-api
+     command: uvicorn app.main:app --host 0.0.0.0 --port 8000
+     ports:
+       - "8000:8000"
+     depends_on:
+       - bridge_sql
+     env_file:
+       - core/env/.env
+     networks:
+       - bridge-net
+ 
+   bridge_sql:
+     build: ./modules/bridge-sql
+     ports:
+       - "5432:5432"
+     env_file:
+       - core/env/.env
+     networks:
+       - bridge-net
+ 
+   baileys_worker:
+     build: ./modules/bridge-worker
++    ports:
++      - "8080:8080"
+     depends_on:
+       - api_server
+     env_file:
+       - core/env/.env
+     networks:
+       - bridge-net
+ 
+-  monitoring:
+-    build: ./modules/bridge-monitoring
++  prometheus:
++    image: prom/prometheus:v2.51.2
++    volumes:
++      - ./modules/bridge-monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+     ports:
+       - "9090:9090"
++    depends_on:
++      - api_server
++      - baileys_worker
++    networks:
++      - bridge-net
++
++  grafana:
++    image: grafana/grafana:10.4.3
++    environment:
++      - GF_SECURITY_ADMIN_USER=admin
++      - GF_SECURITY_ADMIN_PASSWORD=admin
++    volumes:
++      - ./modules/bridge-monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
++      - ./modules/bridge-monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
++    ports:
+       - "3000:3000"
+-    env_file:
+-      - core/env/.env
++    depends_on:
++      - prometheus
+     networks:
+       - bridge-net
+ 
+   bridge_ai:
+     build: ./modules/bridge-ai
+     depends_on:
+       - api_server
+     env_file:
+       - core/env/.env
+     networks:
+       - bridge-net
+ 
+ networks:
+   bridge-net:
+     driver: bridge
+diff --git a/modules/baileys-api b/modules/baileys-api
+new file mode 160000
+index 0000000000000000000000000000000000000000..b4fac20145c5b1f8563c2670c9bec3680a55906a
+--- /dev/null
++++ b/modules/baileys-api
+@@ -0,0 +1 @@
++Subproject commit b4fac20145c5b1f8563c2670c9bec3680a55906a
+diff --git a/modules/baileys-api/README.md b/modules/baileys-api/README.md
+deleted file mode 100644
+index ce070bcf906f62a6b7ec795e47d8a9f2ed78d909..0000000000000000000000000000000000000000
+--- a/modules/baileys-api/README.md
++++ /dev/null
+@@ -1,3 +0,0 @@
+-# Baileys API Module
+-
+-FastAPI-based core API service for Baileys-Bridge. Integrated as a Git submodule for independent evolution.
+diff --git a/modules/bridge-ai b/modules/bridge-ai
+new file mode 160000
+index 0000000000000000000000000000000000000000..f22ed6fa9dfb94a70cfb1498a33c168a035874b6
+--- /dev/null
++++ b/modules/bridge-ai
+@@ -0,0 +1 @@
++Subproject commit f22ed6fa9dfb94a70cfb1498a33c168a035874b6
+diff --git a/modules/bridge-ai/README.md b/modules/bridge-ai/README.md
+deleted file mode 100644
+index 459e519ffd56fa78b88fa3e66c7cbfe6f145db5e..0000000000000000000000000000000000000000
+--- a/modules/bridge-ai/README.md
++++ /dev/null
+@@ -1,3 +0,0 @@
+-# Bridge AI Module
+-
+-Codex-driven orchestration, ML workflows, and AI-powered automation capabilities.
+diff --git a/modules/bridge-monitoring b/modules/bridge-monitoring
+new file mode 160000
+index 0000000000000000000000000000000000000000..49dc0e640797b2e7f50e52986757daebc9119be9
+--- /dev/null
++++ b/modules/bridge-monitoring
+@@ -0,0 +1 @@
++Subproject commit 49dc0e640797b2e7f50e52986757daebc9119be9
+diff --git a/modules/bridge-monitoring/README.md b/modules/bridge-monitoring/README.md
+deleted file mode 100644
+index 9709ffa1a5ee7d7fc49bea2538f3060233996e23..0000000000000000000000000000000000000000
+--- a/modules/bridge-monitoring/README.md
++++ /dev/null
+@@ -1,3 +0,0 @@
+-# Bridge Monitoring Module
+-
+-Observability stack (Prometheus, Grafana, Alertmanager) packaged as a dedicated module.
+diff --git a/modules/bridge-worker b/modules/bridge-worker
+new file mode 160000
+index 0000000000000000000000000000000000000000..f6478efaf36c094e6a19d133d0caa99b8157fa75
+--- /dev/null
++++ b/modules/bridge-worker
+@@ -0,0 +1 @@
++Subproject commit f6478efaf36c094e6a19d133d0caa99b8157fa75
+diff --git a/modules/bridge-worker/README.md b/modules/bridge-worker/README.md
+deleted file mode 100644
+index 9dc953ee9d5fe1008921b38677d3fddf4a91ced3..0000000000000000000000000000000000000000
+--- a/modules/bridge-worker/README.md
++++ /dev/null
+@@ -1,3 +0,0 @@
+-# Bridge Worker Module
+-
+-Node.js worker responsible for asynchronous Baileys-Bridge jobs. Maintained as a detachable module.
+diff --git a/requirements.txt b/requirements.txt
+new file mode 100644
+index 0000000000000000000000000000000000000000..ec2997f7313a5eaa01494d34bc8eb9b59df4d1cd
+--- /dev/null
++++ b/requirements.txt
+@@ -0,0 +1,6 @@
++fastapi>=0.110.0
++starlette>=0.37.0
++prometheus-client>=0.19.0
++uvicorn>=0.29.0
++pytest>=8.2.0
++httpx>=0.27.0
+

@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        module: [baileys-api, bridge-sql, bridge-worker, bridge-monitoring]
+        module: [baileys-api, bridge-sql, bridge-worker, bridge-monitoring, bridge-ai, core-infra]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -43,6 +43,12 @@ jobs:
               ;;
             bridge-monitoring)
               docker compose run --rm monitoring ./test.sh || echo "No tests defined for monitoring"
+              ;;
+            bridge-ai)
+              docker compose run --rm bridge_ai npm test --silent || echo "No tests defined for bridge-ai"
+              ;;
+            core-infra)
+              echo "No automated checks defined for core infrastructure"
               ;;
           esac
 

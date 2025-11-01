@@ -1,5 +1,0 @@
-do_token          = "dop_v1_your_token_here"
-region            = "sgp1"
-droplet_name      = "baileys-bridge"
-ssh_key_id        = "123456"
-enable_floating_ip = false
