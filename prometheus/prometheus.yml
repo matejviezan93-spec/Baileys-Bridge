@@ -1,0 +1,7 @@
+global:
+  scrape_interval: 5s
+scrape_configs:
+  - job_name: bridge-monitoring
+    static_configs:
+      - targets:
+          - bridge-monitoring:9100

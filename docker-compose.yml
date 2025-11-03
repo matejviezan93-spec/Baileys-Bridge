@@ -1,7 +1,15 @@
+
+networks:
+  bridge_net:
+    name: bridge_net
+
+volumes:
+  wa_session:
+
 services:
   redis:
-    image: redis:latest
-    container_name: bridge_redis
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "no"]
     ports:
       - "6379:6379"
     networks:
@@ -9,68 +17,32 @@ services:
 
   bridge-ai:
     build: ./modules/bridge-ai
-    container_name: bridge_ai
-    env_file:
-      - .env
+    env_file: .env
     environment:
-      - GROQ_API_KEY=${GROQ_API_KEY}
-      - GROQ_MODEL=${GROQ_MODEL}
-      - GROQ_URL=${GROQ_URL}
-      - PROMPT_FILE=${PROMPT_FILE}
-      - REDIS_HOST=${REDIS_HOST}
-      - REDIS_PORT=${REDIS_PORT}
-    depends_on:
-      - redis
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
+      GROQ_API_KEY: ${GROQ_API_KEY}
+      GROQ_MODEL: ${GROQ_MODEL}
+      GROQ_URL: ${GROQ_URL}
+      PROMPT_FILE: ${PROMPT_FILE}
+      PERSONA_FILE: ${PERSONA_FILE}
+      MEMORY_FILE: ${MEMORY_FILE}
     ports:
       - "8010:8000"
-    networks:
-      - bridge_net
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
-
-  api_server:
-    build: ./modules/baileys-api
-    env_file:
-      - .env
-    environment:
-      - REDIS_HOST=${REDIS_HOST}
-      - REDIS_PORT=${REDIS_PORT}
     depends_on:
       - redis
-      - bridge-ai
     networks:
       - bridge_net
 
   baileys_worker:
     build: ./modules/bridge-worker
-    env_file:
-      - .env
     environment:
-      - REDIS_HOST=${REDIS_HOST}
-      - REDIS_PORT=${REDIS_PORT}
-      - QR_LOG=1
-      - WA_SESSION_PATH=/data/session
+      QR_LOG: "1"
+      WA_SESSION_PATH: /data/session
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
     volumes:
       - wa_session:/data/session
-    depends_on:
-      - redis
-      - bridge-ai
-    networks:
-      - bridge_net
-
-  bridge_sql:
-    build: ./modules/bridge-sql
-    env_file:
-      - .env
-    environment:
-      - POSTGRES_HOST=${POSTGRES_HOST}
-      - POSTGRES_PORT=${POSTGRES_PORT}
-      - POSTGRES_DB=${POSTGRES_DB}
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - REDIS_HOST=${REDIS_HOST}
-      - REDIS_PORT=${REDIS_PORT}
-    ports:
-      - "5432:5432"
     depends_on:
       - redis
     networks:
@@ -78,11 +50,9 @@ services:
 
   bridge-monitoring:
     build: ./modules/bridge-monitoring
-    env_file:
-      - .env
     environment:
-      - REDIS_HOST=${REDIS_HOST}
-      - REDIS_PORT=${REDIS_PORT}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
     ports:
       - "9100:9100"
     depends_on:
@@ -90,10 +60,24 @@ services:
     networks:
       - bridge_net
 
+  bridge-sql:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5432:5432"
+    networks:
+      - bridge_net
+
   prometheus:
-    image: prom/prometheus:v2.51.2
+    image: prom/prometheus:v2.54.0
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=2d
     volumes:
-      - ./modules/bridge-monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
     ports:
       - "9090:9090"
     depends_on:
@@ -102,25 +86,16 @@ services:
       - bridge_net
 
   grafana:
-    image: grafana/grafana:10.4.3
+    image: grafana/grafana:11.1.0
     environment:
-      - GF_LOG_LEVEL=warn
-      - GF_LOG_CONSOLE_LEVEL=warn
-      - GF_SECURITY_ADMIN_USER=admin
-      - GF_SECURITY_ADMIN_PASSWORD=admin
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: "Viewer"
+      GF_AUTH_DISABLE_LOGIN_FORM: "true"
+    volumes:
+      - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
     ports:
       - "3000:3000"
-    volumes:
-      - ./modules/bridge-monitoring/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
-      - ./modules/bridge-monitoring/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
-      - ./modules/bridge-monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
     depends_on:
       - prometheus
     networks:
       - bridge_net
-
-networks:
-  bridge_net: {}
-
-volumes:
-  wa_session: {}
