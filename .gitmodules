@@ -1,21 +1,3 @@
-[submodule "modules/baileys-api"]
-	path = modules/baileys-api
-	url = https://github.com/matejviezan93-spec/baileys-api.git
-[submodule "modules/bridge-worker"]
-	path = modules/bridge-worker
-	url = https://github.com/matejviezan93-spec/bridge-worker.git
-[submodule "modules/bridge-redis"]
-	path = modules/bridge-redis
-	url = https://github.com/matejviezan93-spec/bridge-redis.git
-[submodule "modules/bridge-sql"]
-	path = modules/bridge-sql
-	url = https://github.com/matejviezan93-spec/bridge-sql.git
-[submodule "modules/bridge-monitoring"]
-	path = modules/bridge-monitoring
-	url = https://github.com/matejviezan93-spec/bridge-monitoring.git
-[submodule "modules/bridge-ai"]
-	path = modules/bridge-ai
-	url = https://github.com/matejviezan93-spec/bridge-ai.git
-[submodule "modules/bridge-core-infra"]
-	path = modules/bridge-core-infra
-	url = https://github.com/matejviezan93-spec/bridge-core-infra.git
+[submodule "modules/pyrogram"]
+    path = modules/pyrogram
+    url = git@github.com:matejviezan93-spec/pyrogram.git
