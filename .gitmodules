@@ -1,3 +1,7 @@
+[submodule "modules/baileys-api"]
+    path = modules/baileys-api
+    url = git@github.com:matejviezan93-spec/baileys-api.git
+
 [submodule "modules/pyrogram"]
     path = modules/pyrogram
     url = git@github.com:matejviezan93-spec/pyrogram.git
