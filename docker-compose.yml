@@ -3,9 +3,9 @@ services:
     image: redis:latest
     container_name: bridge_redis
     ports:
-      - "${REDIS_PORT}:6379"
+      - "6379:6379"
     networks:
-      - ${BRIDGE_NETWORK}
+      - bridge_net
 
   bridge-ai:
     build: ./modules/bridge-ai
@@ -13,18 +13,18 @@ services:
     env_file:
       - .env
     environment:
-      - REDIS_HOST=${REDIS_HOST}
-      - REDIS_PORT=${REDIS_PORT}
       - GROQ_API_KEY=${GROQ_API_KEY}
       - GROQ_MODEL=${GROQ_MODEL}
       - GROQ_URL=${GROQ_URL}
       - PROMPT_FILE=${PROMPT_FILE}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
     depends_on:
       - redis
     ports:
-      - "${BRIDGE_AI_PORT}:8000"
+      - "8010:8000"
     networks:
-      - ${BRIDGE_NETWORK}
+      - bridge_net
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000
 
   api_server:
@@ -38,7 +38,7 @@ services:
       - redis
       - bridge-ai
     networks:
-      - ${BRIDGE_NETWORK}
+      - bridge_net
 
   baileys_worker:
     build: ./modules/bridge-worker
@@ -47,14 +47,15 @@ services:
     environment:
       - REDIS_HOST=${REDIS_HOST}
       - REDIS_PORT=${REDIS_PORT}
+      - QR_LOG=1
       - WA_SESSION_PATH=/data/session
     volumes:
-      - wa_session:/data
+      - wa_session:/data/session
     depends_on:
       - redis
       - bridge-ai
     networks:
-      - ${BRIDGE_NETWORK}
+      - bridge_net
 
   bridge_sql:
     build: ./modules/bridge-sql
@@ -69,13 +70,11 @@ services:
       - REDIS_HOST=${REDIS_HOST}
       - REDIS_PORT=${REDIS_PORT}
     ports:
-      - "${POSTGRES_PORT}:5432"
+      - "5432:5432"
     depends_on:
       - redis
     networks:
-      ${BRIDGE_NETWORK}:
-        aliases:
-          - bridge-sql
+      - bridge_net
 
   bridge-monitoring:
     build: ./modules/bridge-monitoring
@@ -85,22 +84,22 @@ services:
       - REDIS_HOST=${REDIS_HOST}
       - REDIS_PORT=${REDIS_PORT}
     ports:
-      - "${MONITORING_PORT}:9100"
+      - "9100:9100"
     depends_on:
       - redis
     networks:
-      - ${BRIDGE_NETWORK}
+      - bridge_net
 
   prometheus:
     image: prom/prometheus:v2.51.2
     volumes:
       - ./modules/bridge-monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
     ports:
-      - "${PROMETHEUS_PORT}:9090"
+      - "9090:9090"
     depends_on:
       - bridge-monitoring
     networks:
-      - ${BRIDGE_NETWORK}
+      - bridge_net
 
   grafana:
     image: grafana/grafana:10.4.3
@@ -110,7 +109,7 @@ services:
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=admin
     ports:
-      - "${GRAFANA_PORT}:3000"
+      - "3000:3000"
     volumes:
       - ./modules/bridge-monitoring/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources:ro
       - ./modules/bridge-monitoring/grafana/provisioning/dashboards:/etc/grafana/provisioning/dashboards:ro
@@ -118,12 +117,10 @@ services:
     depends_on:
       - prometheus
     networks:
-      - ${BRIDGE_NETWORK}
+      - bridge_net
 
 networks:
-  ${BRIDGE_NETWORK}:
-    name: ${BRIDGE_NETWORK}
-    driver: bridge
+  bridge_net: {}
 
 volumes:
   wa_session: {}
