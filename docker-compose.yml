@@ -34,20 +34,6 @@ services:
     networks:
       - bridge_net
 
-  baileys_worker:
-    build: ./modules/bridge-worker
-    environment:
-      QR_LOG: "1"
-      WA_SESSION_PATH: /data/session
-      REDIS_HOST: redis
-      REDIS_PORT: "6379"
-    volumes:
-      - wa_session:/data/session
-    depends_on:
-      - redis
-    networks:
-      - bridge_net
-
   baileys-api:
     build: ./modules/baileys-api
     environment:
