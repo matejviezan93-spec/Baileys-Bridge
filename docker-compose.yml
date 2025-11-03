@@ -48,6 +48,19 @@ services:
     networks:
       - bridge_net
 
+  baileys-api:
+    build: ./modules/baileys-api
+    environment:
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
+      WA_SESSION_PATH: /data/session
+    volumes:
+      - wa_session:/data/session
+    depends_on:
+      - redis
+    networks:
+      - bridge_net
+
   bridge-monitoring:
     build: ./modules/bridge-monitoring
     environment:
@@ -94,7 +107,7 @@ services:
     volumes:
       - ./grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
     ports:
-      - "3000:3000"
+      - "3300:3000"
     depends_on:
       - prometheus
     networks:
