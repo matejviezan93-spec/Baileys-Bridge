@@ -9,39 +9,41 @@ services:
 
   api_server:
     build: ./modules/baileys-api
+    env_file:
+      - .env
     environment:
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
     ports:
       - "8000:8000"
     depends_on:
       - bridge_sql
-    env_file:
-      - core/env/.env
     networks:
       - bridge_net
 
   bridge_sql:
     build: ./modules/bridge-sql
+    env_file:
+      - .env
     environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=bridge
+      - POSTGRES_HOST=${POSTGRES_HOST}
+      - POSTGRES_PORT=${POSTGRES_PORT}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     ports:
       - "5432:5432"
-    env_file:
-      - core/env/.env
     networks:
       - bridge_net
 
   baileys_worker:
     build: ./modules/bridge-worker
+    env_file:
+      - .env
     ports:
       - "8080:8080"
     depends_on:
       - api_server
-    env_file:
-      - core/env/.env
     networks:
       - bridge_net
 
@@ -54,6 +56,7 @@ services:
     depends_on:
       - api_server
       - baileys_worker
+      - bridge-monitoring
     networks:
       - bridge_net
 
@@ -74,12 +77,36 @@ services:
     networks:
       - bridge_net
 
-  bridge_ai:
+  bridge-ai:
     build: ./modules/bridge-ai
-    depends_on:
-      - api_server
+    container_name: bridge_ai
     env_file:
-      - core/env/.env
+      - .env
+    environment:
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENAI_MODEL=${OPENAI_MODEL}
+      - AI_URL=${AI_URL}
+    depends_on:
+      - redis
+    ports:
+      - "8010:8000"
+    networks:
+      - bridge_net
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
+
+  bridge-monitoring:
+    build: ./modules/bridge-monitoring
+    env_file:
+      - .env
+    environment:
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+    ports:
+      - "9100:9100"
+    depends_on:
+      - redis
     networks:
       - bridge_net
 
