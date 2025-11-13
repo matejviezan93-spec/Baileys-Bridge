@@ -1,4 +1,7 @@
 {
+  "scripts": {
+    "start:baileys": "npm --prefix modules/baileys-api start"
+  },
   "dependencies": {
     "qrcode-terminal": "^0.12.0"
   }
